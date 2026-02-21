@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>HABIT TRACKER | EST. 2026</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,900;1,400&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+
+        :root { --black: #000000; --gray: #888888; --border: #e0e0e0; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { background: white; color: var(--black); font-family: 'Inter', sans-serif; letter-spacing: 0.05em; display: flex; }
+
+
+
+        /* Sidebar - Editorial Style */
+
+        .sidebar { width: 240px; height: 100vh; position: fixed; border-right: 1px solid var(--border); padding: 60px 40px; display: flex; flex-direction: column; }
+
+        .brand { font-family: 'Bodoni Moda', serif; font-size: 28px; font-weight: 900; margin-bottom: 80px; letter-spacing: 0.1em; }
+
+        .nav-links { list-style: none; }
+
+        .nav-links li { font-size: 11px; font-weight: 700; margin-bottom: 35px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+
+        .nav-links li.active, .nav-links li:hover { text-decoration: underline; text-underline-offset: 10px; color: var(--gray); }
+
+
+
+        /* Main Content */
+
+        .content { margin-left: 240px; flex: 1; padding: 100px; max-width: 1100px; }
+
+        .page { display: none; }
+
+        .page.active { display: block; }
+
+
+
+        /* Calendar - Infinite Grid */
+
+        .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-family: 'Bodoni Moda', serif; font-style: italic; font-size: 22px; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--black); border-left: 1px solid var(--black); }
+
+        .cal-day { height: 100px; border-right: 1px solid var(--black); border-bottom: 1px solid var(--black); padding: 10px; cursor: pointer; font-size: 11px; position: relative; }
+
+        .cal-day.selected { background: #f4f4f4; font-weight: 900; }
+
+        .dot { width: 4px; height: 4px; background: black; border-radius: 50%; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); }
+
+
+
+        /* Dashboard & Stats */
+
+        .stats-hero { display: flex; gap: 60px; margin-bottom: 80px; border-bottom: 1px solid var(--black); padding-bottom: 20px; }
+
+        .stat-item span { font-size: 10px; font-weight: 700; color: var(--gray); }
+
+        .stat-item h2 { font-family: 'Bodoni Moda', serif; font-size: 40px; }
+
+
+
+        /* Checklist & Scrapbook */
+
+        .checklist-item { display: flex; align-items: center; gap: 20px; padding: 25px 0; border-bottom: 1px solid var(--border); }
+
+        .custom-check { width: 18px; height: 18px; border: 1px solid var(--black); cursor: pointer; appearance: none; transition: 0.2s; }
+
+        .custom-check:checked { background: var(--black); }
+
+        .photo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 30px; }
+
+        .photo-slot { height: 120px; border: 1px solid var(--border); object-fit: cover; filter: grayscale(100%); }
+
+
+
+        /* Rewards & Badges Grid */
+
+        .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 40px; margin-top: 40px; }
+
+        .badge { text-align: center; border: 1px solid var(--border); padding: 30px 10px; opacity: 0.2; filter: grayscale(100%); transition: 0.5s; }
+
+        .badge.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--black); }
+
+        .badge i { font-size: 32px; margin-bottom: 15px; display: block; }
+
+        .badge p { font-size: 9px; font-weight: 700; text-transform: uppercase; }
+
+
+
+        /* Modals */
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); display: none; align-items: center; justify-content: center; z-index: 1000; }
+
+        .modal-inner { width: 400px; text-align: center; }
+
+        .modal-inner h3 { font-family: 'Bodoni Moda', serif; font-size: 30px; margin-bottom: 30px; }
+
+        .modal-inner input { width: 100%; padding: 15px; border: 1px solid var(--black); margin-bottom: 20px; font-size: 12px; outline: none; }
+
+        .icon-lib { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
+
+        .icon-btn { font-size: 20px; cursor: pointer; padding: 10px; border: 1px solid transparent; }
+
+        .icon-btn.active { border-color: var(--black); }
+
+        .freq-btn { font-size: 10px; cursor: pointer; padding: 5px; border: 1px solid var(--border); flex: 1; }
+
+        .freq-btn.active { background: var(--black); color: white; border-color: var(--black); }
+
+        .btn-black { background: var(--black); color: white; border: none; padding: 15px 40px; font-size: 10px; font-weight: 700; cursor: pointer; margin-top: 20px; }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <nav class="sidebar">
+
+        <div class="brand">HABIT TRACKER</div>
+
+        <ul class="nav-links">
+
+            <li class="active" onclick="switchPage('calendar', this)">CALENDAR</li>
+
+            <li onclick="switchPage('habits', this)">HABITS</li>
+
+            <li onclick="switchPage('rewards', this)">REWARDS</li>
+
+            <li onclick="switchPage('profile', this)">PROFILE</li>
+
+            <li onclick="switchPage('friends', this)">FRIENDS</li>
+
+        </ul>
+
+    </nav>
+
+
+
+    <main class="content">
+
+        <section id="calendar" class="page active">
+
+            <div class="stats-hero">
+
+                <div class="stat-item"><span>STREAK</span><h2 id="streak-val">0</h2></div>
+
+                <div class="stat-item"><span>POINTS</span><h2 id="points-val">0</h2></div>
+
+            </div>
+
+            <div class="cal-nav">
+
+                <button onclick="moveMonth(-1)" style="background:none; border:none; cursor:pointer;">&larr;</button>
+
+                <span id="month-label">FEBRUARY 2026</span>
+
+                <button onclick="moveMonth(1)" style="background:none; border:none; cursor:pointer;">&rarr;</button>
+
+            </div>
+
+            <div class="calendar-grid" id="calendarGrid"></div>
+
+
+
+            <div id="day-detail" style="margin-top: 60px;">
+
+                <h2 id="selected-date-label" style="font-family:'Bodoni Moda'; margin-bottom: 30px;">FEBRUARY 22</h2>
+
+                <div id="checklist-container"></div>
+
+               
+
+                <div class="scrapbook" style="margin-top: 60px;">
+
+                    <span style="font-size:10px; font-weight:700;">SCRAPBOOK / MAX 05</span>
+
+                    <div class="photo-grid" id="photoGrid">
+
+                        <label style="height:120px; border:1px dashed #ccc; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:10px;">
+
+                            ADD PHOTO <input type="file" hidden multiple accept="image/*" onchange="uploadPhoto(event)">
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <section id="rewards" class="page">
+
+            <h2 style="font-family:'Bodoni Moda'; font-size:40px; margin-bottom:40px;">ACHIEVEMENTS</h2>
+
+            <div class="stat-item" style="border-bottom:1px solid black; padding-bottom:10px; margin-bottom:40px;">
+
+                <span id="total-stats-text">POINTS: 0 | COMPLETED: 0</span>
+
+            </div>
+
+            <div id="badge-container" class="badge-grid"></div>
+
+        </section>
+
+
+
+        <section id="habits" class="page">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
+
+                <h2 style="font-family:'Bodoni Moda';">HABIT SETUP</h2>
+
+                <button class="btn-black" onclick="openModal()">+ NEW HABIT</button>
+
+            </div>
+
+            <div id="habit-list-container"></div>
+
+        </section>
+
+
+
+        <section id="profile" class="page">
+
+           <div style="text-align:center; border-bottom:1px solid #eee; padding-bottom:40px; margin-bottom:40px;">
+
+    <!-- PROFILE PHOTO -->
+    <div style="position:relative; width:100px; height:100px; margin:0 auto 20px;">
+        
+        <img id="profile-photo" 
+             src="" 
+             style="width:100%; height:100%; object-fit:cover; border:1px solid black;">
+
+        <i class="ph ph-pencil"
+           onclick="document.getElementById('photoInput').click()"
+           style="position:absolute; bottom:-5px; right:-5px; 
+                  background:white; border:1px solid black; 
+                  padding:5px; cursor:pointer; font-size:14px;">
+        </i>
+
+        <input type="file" id="photoInput" hidden accept="image/*" onchange="changeProfilePhoto(event)">
+    </div>
+
+    <!-- NAME -->
+    <div style="position:relative; display:inline-block;">
+        <h2 id="user-name-display" style="font-family:'Bodoni Moda'; display:inline;">
+            YOU
+        </h2>
+        <i class="ph ph-pencil"
+           onclick="enableNameEdit()"
+           style="margin-left:10px; cursor:pointer; font-size:14px;">
+        </i>
+    </div>
+
+    <p id="user-bio-display" style="font-size:12px; color:#888; margin-top:10px;">
+        BUILDING BETTER HABITS
+    </p>
+
+</div>
+            <h3 style="font-size:11px; font-weight:700; margin-bottom:20px;">FRIENDS</h3>
+
+            <div id="friends-container"></div>
+
+        </section>
+        <section id="friend-view" class="page">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
+        <h2 id="friend-view-name" style="font-family:'Bodoni Moda'; font-size:40px;">
+            FRIEND NAME
+        </h2>
+        <button class="btn-black" onclick="goBackToProfile()">
+    BACK
+</button>
+    </div>
+
+    <div class="calendar-grid" id="friendCalendarGrid"></div>
+
+    <div id="friend-day-detail" style="margin-top:60px;"></div>
+
+</section>
+        <section id="friends" class="page">
+            <h2 style="font-family:'Bodoni Moda'; font-size:40px; margin-bottom:40px;">
+              LEADERBOARD
+            </h2>
+
+          <div id="leaderboard-container"></div>
+        </section>
+
+
+    </main>
+
+
+
+    <div id="habitModal" class="modal">
+
+        <div class="modal-inner">
+
+            <h3>CREATE</h3>
+
+            <input type="text" id="habitNameInput" placeholder="HABIT NAME">
+
+            <input type="number" id="habitPointsInput" placeholder="POINTS (e.g. 10)" min="1" style="width: 100%; padding: 15px; border: 1px solid var(--black); margin-bottom: 20px; font-size: 12px; outline: none;">
+
+            <div class="icon-lib" id="iconLib"></div>
+
+            <div style="display:flex; gap:5px; margin-bottom:30px;" id="freqLib"></div>
+
+            <button class="btn-black" onclick="saveHabit()">SAVE HABIT</button>
+
+            <button style="display:block; margin: 20px auto; background:none; border:none; font-size:10px; cursor:pointer;" onclick="closeModal()">CANCEL</button>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+    // --- 1. STATE & STORAGE ---
+    let state = JSON.parse(localStorage.getItem('habitly_v3')) || {
+        points: 0, streak: 0, totalCompleted: 0,
+        userName: "YOU",
+userBio: "BUILDING BETTER HABITS",
+userPhoto: "",
+        habits: [{id: 1, name: "READING", icon: "ph-book-open", freq: [0,1,2,3,4,5,6], value: 10}],
+        history: {}, 
+        friends: [
+            {
+                name: "ALEX RIVERA",
+                id: "f1",
+                streak: 14,
+                points: 420,
+                todayCompleted: 2,
+                history: {
+                    "2026-02-20": { completed: [1], photos: [] },
+                    "2026-02-21": { completed: [1], photos: [] }
+                }
+            },
+            {
+                name: "SAM CHEN",
+                id: "f2",
+                streak: 7,
+                points: 310,
+                todayCompleted: 1,
+                history: {
+                    "2026-02-21": { completed: [1], photos: [] }
+                }
+            }
+        ],
+        lastTaskHour: null
+    };
+
+    let currentViewDate = new Date();
+    let selectedDateStr = new Date().toISOString().split('T')[0];
+    let friendSelectedDate = new Date().toISOString().split('T')[0];
+    let currentFriend = null;
+    let modalIcon = "ph-star";
+    let modalFreq = [0,1,2,3,4,5,6];
+
+    function save() { localStorage.setItem('habitly_v3', JSON.stringify(state)); }
+
+    // --- 2. CALENDAR ENGINE (USER) ---
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        if(!grid) return;
+        grid.innerHTML = "";
+        const y = currentViewDate.getFullYear();
+        const m = currentViewDate.getMonth();
+        document.getElementById('month-label').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate).toUpperCase();
+
+        const firstDay = new Date(y, m, 1).getDay();
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const dayEl = document.createElement('div');
+            dayEl.className = `cal-day ${dStr === selectedDateStr ? 'selected' : ''}`;
+            dayEl.innerHTML = `<span>${String(d).padStart(2, '0')}</span>`;
+            if (state.history[dStr] && state.history[dStr].completed.length > 0) {
+                dayEl.innerHTML += `<div class="dot"></div>`;
+            }
+            dayEl.onclick = () => { selectedDateStr = dStr; renderCalendar(); updateDayDetail(); };
+            grid.appendChild(dayEl);
+        }
+    }
+
+    function moveMonth(dir) { 
+        currentViewDate.setMonth(currentViewDate.getMonth() + dir); 
+        renderCalendar(); 
+        if(currentFriend) renderFriendCalendar(); 
+    }
+
+    // --- 3. HABIT LOGIC ---
+    function updateDayDetail() {
+        const dateObj = new Date(selectedDateStr + "T00:00:00");
+        document.getElementById('selected-date-label').innerText = dateObj.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'}).toUpperCase();
+        const container = document.getElementById('checklist-container');
+        const dayOfWeek = dateObj.getDay();
+        const applicableHabits = state.habits.filter(h => h.freq.includes(dayOfWeek));
+        const dayData = state.history[selectedDateStr] || { completed: [], photos: [] };
+
+        container.innerHTML = applicableHabits.map(h => `
+            <div class="checklist-item">
+                <input type="checkbox" class="custom-check" ${dayData.completed.includes(h.id) ? 'checked' : ''} onchange="toggleHabit(${h.id}, '${selectedDateStr}')">
+                <i class="ph ${h.icon}" style="font-size:20px;"></i>
+                <span style="font-weight:700; font-size:12px;">${h.name}</span>
+            </div>
+        `).join('');
+        renderScrapbook(dayData.photos);
+    }
+
+    function toggleHabit(id, date) {
+        if (!state.history[date]) state.history[date] = { completed: [], photos: [] };
+        const idx = state.history[date].completed.indexOf(id);
+        const habit = state.habits.find(h => h.id === id);
+        const pointValue = habit ? (habit.value || 10) : 10;
+
+        if (idx > -1) {
+            state.history[date].completed.splice(idx, 1);
+            state.points = Math.max(0, state.points - pointValue);
+            state.totalCompleted--;
+        } else {
+            state.history[date].completed.push(id);
+            state.points += pointValue;
+            state.totalCompleted++;
+            state.lastTaskHour = new Date().getHours();
+        }
+        updateStats(); renderCalendar(); updateDayDetail();
+    }
+
+    // --- 4. FRIEND & LEADERBOARD LOGIC ---
+    function openFriendView(friendId) {
+        currentFriend = state.friends.find(f => f.id === friendId);
+        if (!currentFriend) return;
+
+        document.getElementById('friend-view-name').innerText = currentFriend.name;
+        
+        // Hide all pages, show friend-view
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('friend-view').classList.add('active');
+
+        renderFriendCalendar();
+        renderFriendDayDetail();
+    }
+
+    function renderFriendCalendar() {
+        const grid = document.getElementById('friendCalendarGrid');
+        grid.innerHTML = "";
+        const y = currentViewDate.getFullYear();
+        const m = currentViewDate.getMonth();
+
+        const firstDay = new Date(y, m, 1).getDay();
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const dayEl = document.createElement('div');
+            dayEl.className = `cal-day ${dStr === friendSelectedDate ? 'selected' : ''}`;
+            dayEl.innerHTML = `<span>${String(d).padStart(2, '0')}</span>`;
+
+            if (currentFriend.history && currentFriend.history[dStr] && currentFriend.history[dStr].completed.length > 0) {
+                dayEl.innerHTML += `<div class="dot"></div>`;
+            }
+
+            dayEl.onclick = () => {
+                friendSelectedDate = dStr;
+                renderFriendCalendar();
+                renderFriendDayDetail();
+            };
+            grid.appendChild(dayEl);
+        }
+    }
+
+    function renderFriendDayDetail() {
+        const container = document.getElementById('friend-day-detail');
+        const dateObj = new Date(friendSelectedDate + "T00:00:00");
+        const dayData = currentFriend.history[friendSelectedDate] || { completed: [], photos: [] };
+
+        let html = `<h2 style="font-family:'Bodoni Moda'; margin-bottom: 20px;">${dateObj.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'}).toUpperCase()}</h2>`;
+        
+        if (dayData.completed.length === 0) {
+            html += `<p style="font-size:11px; color:gray;">NO HABITS COMPLETED THIS DAY.</p>`;
+        } else {
+            html += dayData.completed.map(id => {
+                // Since this is a friend, we show a generic check or map to your icons
+                return `<div class="checklist-item">
+                            <i class="ph ph-check-circle" style="color:black; font-size:20px;"></i>
+                            <span style="font-weight:700; font-size:12px;">HABIT COMPLETED</span>
+                        </div>`;
+            }).join('');
+        }
+        container.innerHTML = html;
+    }
+
+    function renderLeaderboard() {
+        const container = document.getElementById('leaderboard-container');
+        const today = new Date().toISOString().split('T')[0];
+        const myToday = state.history[today]?.completed.length || 0;
+
+        const all = [
+            { name: state.userName, points: state.points, today: myToday, isUser: true },
+            ...state.friends.map(f => ({ name: f.name, points: f.points, today: f.todayCompleted || 0, isUser: false }))
+        ].sort((a, b) => b.points - a.points);
+
+        container.innerHTML = all.map((p, i) => `
+            <div class="checklist-item" style="justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span style="font-family:'Bodoni Moda'; font-size:20px;">#${i+1}</span>
+                    <div>
+                        <div style="font-weight:700; font-size:12px;">${p.name} ${p.isUser ? '(YOU)' : ''}</div>
+                        <div style="font-size:9px; color:gray;">TODAY: ${p.today}</div>
+                    </div>
+                </div>
+                <div style="font-family:'Bodoni Moda'; font-size:18px;">${p.points} PT</div>
+            </div>
+        `).join('');
+    }
+
+    function goBackToProfile() {
+        switchPage('profile', document.querySelector('.nav-links li:nth-child(4)'));
+    }
+
+    // --- 5. UI HELPERS ---
+    function switchPage(pageId, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+        if(el) el.classList.add('active');
+        
+        if (pageId === 'rewards') renderRewards();
+        if (pageId === 'habits') renderHabitsSetup();
+        if (pageId === 'profile') updateProfileDisplay();
+        if (pageId === 'friends') renderLeaderboard();
+    }
+
+    function updateStats() {
+        state.streak = calculateStreak();
+        document.getElementById('streak-val').innerText = state.streak;
+        document.getElementById('points-val').innerText = state.points;
+        save();
+    }
+
+    function calculateStreak() {
+        let streak = 0; let checkDate = new Date();
+        while (true) {
+            const dStr = checkDate.toISOString().split('T')[0];
+            const dayOfWeek = checkDate.getDay();
+            const scheduled = state.habits.filter(h => h.freq.includes(dayOfWeek));
+            if (scheduled.length === 0) {
+                checkDate.setDate(checkDate.getDate() - 1);
+                continue;
+            }
+            const done = state.history[dStr]?.completed || [];
+            if (scheduled.every(h => done.includes(h.id)) && done.length > 0) {
+                streak++; checkDate.setDate(checkDate.getDate() - 1);
+            } else break;
+        }
+        return streak;
+    }
+
+   function updateProfileDisplay() {
+    document.getElementById('user-name-display').innerText = state.userName;
+    document.getElementById('user-bio-display').innerText = state.userBio;
+
+    const photo = document.getElementById('profile-photo');
+    if (state.userPhoto) {
+        photo.src = state.userPhoto;
+    } else {
+        photo.src = "https://via.placeholder.com/100?text=Y";
+    }
+
+    const container = document.getElementById('friends-container');
+    container.innerHTML = state.friends.map(f => `
+        <div class="checklist-item" style="justify-content:space-between; cursor:pointer;" onclick="openFriendView('${f.id}')">
+            <span style="font-weight:700; font-size:12px;">${f.name}</span>
+            <span style="font-size:10px; color:#888;">${f.streak} DAY STREAK</span>
+        </div>
+    `).join('');
+}
+function enableNameEdit() {
+    const nameEl = document.getElementById('user-name-display');
+    const currentName = nameEl.innerText;
+
+    nameEl.innerHTML = `
+        <input type="text" 
+               value="${currentName}" 
+               onblur="saveName(this.value)"
+               style="font-family:'Bodoni Moda'; font-size:24px; border:1px solid black; padding:5px;">
+    `;
+
+    nameEl.querySelector("input").focus();
+}
+
+function saveName(newName) {
+    if(newName.trim() !== "") {
+        state.userName = newName.toUpperCase();
+        save();
+    }
+    updateProfileDisplay();
+}
+
+function changeProfilePhoto(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        state.userPhoto = e.target.result;
+        save();
+        updateProfileDisplay();
+    };
+    reader.readAsDataURL(file);
+}
+    // Boilerplate for remaining functions
+    function openModal() { document.getElementById('habitModal').style.display = 'flex'; renderModalIcons(); }
+    function closeModal() { document.getElementById('habitModal').style.display = 'none'; }
+    function renderModalIcons() {
+        const icons = ['ph-book-open', 'ph-drop', 'ph-barbell', 'ph-heart', 'ph-leaf', 'ph-pencil', 'ph-sun', 'ph-moon', 'ph-coffee', 'ph-code'];
+        document.getElementById('iconLib').innerHTML = icons.map(i => `<div class="icon-btn ${modalIcon === i ? 'active' : ''}" onclick="modalIcon='${i}'; renderModalIcons()"><i class="ph ${i}"></i></div>`).join('');
+        const days = ['S','M','T','W','T','F','S'];
+        document.getElementById('freqLib').innerHTML = days.map((d, i) => `<div class="freq-btn ${modalFreq.includes(i) ? 'active' : ''}" onclick="toggleFreq(${i})">${d}</div>`).join('');
+    }
+    function toggleFreq(d) {
+        const idx = modalFreq.indexOf(d);
+        if(idx > -1) modalFreq.splice(idx,1); else modalFreq.push(d);
+        renderModalIcons();
+    }
+    function saveHabit() {
+        const name = document.getElementById('habitNameInput').value;
+        const pts = parseInt(document.getElementById('habitPointsInput').value) || 10;
+        if(name) {
+            state.habits.push({ id: Date.now(), name: name.toUpperCase(), icon: modalIcon, freq: [...modalFreq], value: pts });
+            save(); closeModal(); renderHabitsSetup(); updateDayDetail();
+        }
+    }
+    function renderHabitsSetup() {
+        const container = document.getElementById('habit-list-container');
+        container.innerHTML = state.habits.map(h => `
+            <div class="checklist-item" style="justify-content:space-between">
+                <div style="display:flex; align-items:center; gap:15px"><i class="ph ${h.icon}"></i><span style="font-weight:700; font-size:12px;">${h.name}</span></div>
+                <button onclick="deleteHabit(${h.id})" style="background:none; border:none; color:red; cursor:pointer; font-size:10px;">DELETE</button>
+            </div>
+        `).join('');
+    }
+    function deleteHabit(id) { state.habits = state.habits.filter(h => h.id !== id); save(); renderHabitsSetup(); updateDayDetail(); }
+    function renderScrapbook(photos) {
+        const grid = document.getElementById('photoGrid');
+        if(!grid) return;
+        const label = grid.querySelector('label');
+        grid.innerHTML = ""; if(label) grid.appendChild(label);
+        (photos || []).forEach(p => {
+            const img = document.createElement('img'); img.src = p; img.className = 'photo-slot'; grid.prepend(img);
+        });
+    }
+    function uploadPhoto(event) {
+        const files = event.target.files;
+        if (!state.history[selectedDateStr]) state.history[selectedDateStr] = { completed: [], photos: [] };
+        if (state.history[selectedDateStr].photos.length + files.length > 5) { alert("MAX 5"); return; }
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.onload = (e) => { state.history[selectedDateStr].photos.push(e.target.result); save(); renderScrapbook(state.history[selectedDateStr].photos); };
+            reader.readAsDataURL(file);
+        }
+    }
+    function renderRewards() {
+        const badgeLogic = [
+            {name: 'FIRST STEP', icon: 'ph-plant', check: () => state.totalCompleted >= 1},
+            {name: '7-DAY WARRIOR', icon: 'ph-sword', check: () => state.streak >= 7},
+            {name: 'MEMORY KEEPER', icon: 'ph-camera', check: () => Object.values(state.history).some(d => d.photos.length >= 1)},
+            {name: '1000 PT LEGEND', icon: 'ph-crown', check: () => state.points >= 1000}
+        ];
+        const container = document.getElementById('badge-container');
+        container.innerHTML = badgeLogic.map(b => `<div class="badge ${b.check() ? 'unlocked' : ''}"><i class="ph ${b.icon}"></i><p>${b.name}</p></div>`).join('');
+        document.getElementById('total-stats-text').innerText = `POINTS: ${state.points} | COMPLETED: ${state.totalCompleted}`;
+    }
+    function editProfile() {
+        state.userName = prompt("NAME:", state.userName).toUpperCase();
+        state.userBio = prompt("BIO:", state.userBio).toUpperCase();
+        save(); updateProfileDisplay();
+    }
+
+    window.onload = () => { 
+        renderCalendar(); 
+        updateStats(); 
+        updateDayDetail(); 
+        updateProfileDisplay(); 
+    };
+</script>
+
+</body>
+
+</html>
