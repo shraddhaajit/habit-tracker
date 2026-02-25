@@ -898,7 +898,14 @@ function changeProfilePhoto(event) {
         updateProfileDisplay(); 
     };
     function openScrapModal() {
+
+        const canvas = document.getElementById("scrapCanvas");
+
+        // FORCE CLEAR FIRST
+        canvas.innerHTML = "";
+
         document.getElementById("scrapModal").style.display = "flex";
+
         loadScrapbook();
     }
 
@@ -950,7 +957,12 @@ function changeProfilePhoto(event) {
         wrapper.dataset.rotation = 0;
 
         const img = document.createElement("img");
+
+        
+
         img.src = src;
+        wrapper.appendChild(img);
+
         img.style.width = "150px";
         img.style.border = "8px solid white";
         img.style.boxShadow = "0 5px 15px rgba(0,0,0,0.3)";
@@ -988,7 +1000,7 @@ function changeProfilePhoto(event) {
             wrapper.remove();
         };
 
-        wrapper.appendChild(img);
+
         wrapper.appendChild(rotateHandle);
         wrapper.appendChild(removeBtn);
 
@@ -1002,7 +1014,12 @@ function changeProfilePhoto(event) {
     function createStickerItem(src) {
 
         const canvas = document.getElementById("scrapCanvas");
+        const currentItems = canvas.querySelectorAll(".scrap-item").length;
 
+        if (currentItems >= 5) {
+           alert("MAXIMUM 5 ITEMS PER DAY");
+           return;
+        }
         const wrapper = document.createElement("div");
         wrapper.className = "scrap-item";
         wrapper.style.position = "absolute";
@@ -1056,74 +1073,72 @@ function changeProfilePhoto(event) {
         enableDrag(wrapper);
         enableRotate(wrapper, rotateHandle);
     }
+
     function enableDrag(wrapper) {
 
-        const img = wrapper.querySelector("img");
-        const resizeZone = 30;
+        const resizeZone = 35;
 
-        let isDragging = false;
-        let isResizing = false;
-        let startX, startY, startWidth, startLeft, startTop;
+        wrapper.addEventListener("mousemove", function(e) {
 
-        wrapper.onmousedown = function(e) {
-
+            const img = wrapper.querySelector("img");
             const rect = img.getBoundingClientRect();
+
             const offsetX = e.clientX - rect.left;
             const offsetY = e.clientY - rect.top;
 
-            const resize =
+            const isResize =
                 offsetX > rect.width - resizeZone &&
                 offsetY > rect.height - resizeZone;
 
-            startX = e.clientX;
-            startY = e.clientY;
+            wrapper.style.cursor = isResize ? "nwse-resize" : "default";
+        });
 
-            if (resize) {
-                isResizing = true;
-                startWidth = parseFloat(window.getComputedStyle(img).width);
-            } else {
-                isDragging = true;
-                startLeft = parseFloat(wrapper.style.left);
-                startTop = parseFloat(wrapper.style.top);
-            }
+        wrapper.addEventListener("mousedown", function(e) {
 
-            document.onmousemove = function(ev) {
+            const img = wrapper.querySelector("img");
+            const rect = img.getBoundingClientRect();
 
-                if (isResizing) {
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
 
-                    const delta = ev.clientX - startX;
-                    const newWidth = startWidth + delta;
+            const isResize =
+                offsetX > rect.width - resizeZone &&
+                offsetY > rect.height - resizeZone;
+
+            function onMouseMove(ev) {
+
+                if (isResize) {
+                    const delta = ev.clientX - e.clientX;
+                    const newWidth = rect.width + delta;
 
                     if (newWidth > 60 && newWidth < 800) {
                         img.style.width = newWidth + "px";
                     }
+                } else {
+                    wrapper.style.left =
+                        (ev.pageX - wrapper.parentElement.offsetLeft - (e.clientX - rect.left)) + "px";
+
+                    wrapper.style.top =
+                        (ev.pageY - wrapper.parentElement.offsetTop - (e.clientY - rect.top)) + "px";
                 }
+            }
 
-                if (isDragging) {
+            function onMouseUp() {
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+            }
 
-                    const dx = ev.clientX - startX;
-                    const dy = ev.clientY - startY;
-
-                    wrapper.style.left = startLeft + dx + "px";
-                    wrapper.style.top = startTop + dy + "px";
-                }
-            };
-
-            document.onmouseup = function() {
-                isDragging = false;
-                isResizing = false;
-                document.onmousemove = null;
-            };
-        };
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
+        });
     }
+
     function enableRotate(wrapper, handle) {
 
-        handle.onmousedown = function(e) {
-
+        handle.addEventListener("mousedown", function(e) {
             e.stopPropagation();
 
-            document.onmousemove = function(ev) {
-
+            function onMouseMove(ev) {
                 const rect = wrapper.getBoundingClientRect();
                 const cx = rect.left + rect.width / 2;
                 const cy = rect.top + rect.height / 2;
@@ -1132,18 +1147,24 @@ function changeProfilePhoto(event) {
                 const deg = angle * 180 / Math.PI;
 
                 wrapper.style.transform = `rotate(${deg}deg)`;
-            };
+            }
 
-            document.onmouseup = function() {
-                document.onmousemove = null;
-            };
-        };
+            function onMouseUp() {
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+            }
+
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
+        });
     }
 
     function saveScrapbook() {
 
         const canvas = document.getElementById("scrapCanvas");
-        scrapbookMemory[selectedDateStr] = canvas.innerHTML;
+
+        // Save empty state correctly
+        scrapbookMemory[selectedDateStr] = canvas.innerHTML || "";
 
         localStorage.setItem(
             "scrapbooks_v1",
@@ -1167,8 +1188,8 @@ function changeProfilePhoto(event) {
 
             document.querySelectorAll(".scrap-item").forEach(wrapper => {
 
-                const rotateHandle = wrapper.children[1];
-                const removeBtn = wrapper.children[2];
+                const rotateHandle = wrapper.querySelector("div:nth-of-type(1)");
+                const removeBtn = wrapper.querySelector("div:nth-of-type(2)");
 
                 enableDrag(wrapper);
                 enableRotate(wrapper, rotateHandle);
