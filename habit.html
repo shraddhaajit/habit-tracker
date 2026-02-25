@@ -80,7 +80,7 @@
 
         .photo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 30px; }
 
-        .photo-slot { height: 120px; border: 1px solid var(--border); object-fit: cover; filter: grayscale(100%); }
+        .photo-slot { height: 120px; border: 1px solid var(--border); object-fit: cover; filter: grayscale(0%); }
 
 
 
@@ -119,6 +119,23 @@
         .freq-btn.active { background: var(--black); color: white; border-color: var(--black); }
 
         .btn-black { background: var(--black); color: white; border: none; padding: 15px 40px; font-size: 10px; font-weight: 700; cursor: pointer; margin-top: 20px; }
+
+        /* Calendar Progress Bar */
+        .progress-container {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            height: 6px;
+            border: 1px solid black;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: black;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
 
     </style>
 
@@ -182,24 +199,6 @@
 
                 <div id="checklist-container"></div>
 
-               
-
-                <div class="scrapbook" style="margin-top: 60px;">
-
-                    <span style="font-size:10px; font-weight:700;">SCRAPBOOK / MAX 05</span>
-
-                    <div class="photo-grid" id="photoGrid">
-
-                        <label style="height:120px; border:1px dashed #ccc; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:10px;">
-
-                            ADD PHOTO <input type="file" hidden multiple accept="image/*" onchange="uploadPhoto(event)">
-
-                        </label>
-
-                    </div>
-
-                </div>
-
             </div>
 
         </section>
@@ -243,11 +242,12 @@
            <div style="text-align:center; border-bottom:1px solid #eee; padding-bottom:40px; margin-bottom:40px;">
 
     <!-- PROFILE PHOTO -->
-    <div style="position:relative; width:100px; height:100px; margin:0 auto 20px;">
+    <div style="text-align:center; margin-bottom:20px;">
+
+    <div style="position:relative; width:100px; height:100px; margin:0 auto 10px; border:1px solid black; background:white;">
         
         <img id="profile-photo" 
-             src="" 
-             style="width:100%; height:100%; object-fit:cover; border:1px solid black;">
+     style="width:100%; height:100%; object-fit:cover; border:1px solid black; display:none;">
 
         <i class="ph ph-pencil"
            onclick="document.getElementById('photoInput').click()"
@@ -259,9 +259,20 @@
         <input type="file" id="photoInput" hidden accept="image/*" onchange="changeProfilePhoto(event)">
     </div>
 
+    <!-- REMOVE BUTTON MOVED HERE -->
+    <button 
+        onclick="removeProfilePhoto()" 
+        style="background:none; border:1px solid black; font-size:10px; cursor:pointer; padding:5px 10px;">
+        REMOVE PHOTO
+    </button>
+
+</div>
+
     <!-- NAME -->
+<div style="margin-top:20px;">
     <div style="position:relative; display:inline-block;">
-        <h2 id="user-name-display" style="font-family:'Bodoni Moda'; display:inline;">
+        <h2 id="user-name-display"
+            style="font-family:'Bodoni Moda'; display:inline;">
             YOU
         </h2>
         <i class="ph ph-pencil"
@@ -269,15 +280,26 @@
            style="margin-left:10px; cursor:pointer; font-size:14px;">
         </i>
     </div>
+</div>
 
-    <p id="user-bio-display" style="font-size:12px; color:#888; margin-top:10px;">
-        BUILDING BETTER HABITS
-    </p>
+<!-- BIO -->
+<div style="margin-top:10px;">
+    <div style="position:relative; display:inline-block;">
+        <p id="user-bio-display"
+           style="font-size:12px; color:#888; margin:0; display:inline;">
+            BUILDING BETTER HABITS
+        </p>
+        <i class="ph ph-pencil"
+           onclick="enableBioEdit()"
+           style="margin-left:8px; cursor:pointer; font-size:12px;">
+        </i>
+    </div>
+</div>
 
 </div>
             <h3 style="font-size:11px; font-weight:700; margin-bottom:20px;">FRIENDS</h3>
 
-            <div id="friends-container"></div>
+            <div id="profile-friend-list"></div>
 
         </section>
         <section id="friend-view" class="page">
@@ -290,19 +312,56 @@
     BACK
 </button>
     </div>
-
+<div class="cal-nav">
+    <button onclick="moveMonth(-1)" style="background:none; border:none; cursor:pointer;">&larr;</button>
+    <span id="friend-month-label"></span>
+    <button onclick="moveMonth(1)" style="background:none; border:none; cursor:pointer;">&rarr;</button>
+</div>
     <div class="calendar-grid" id="friendCalendarGrid"></div>
 
     <div id="friend-day-detail" style="margin-top:60px;"></div>
 
 </section>
         <section id="friends" class="page">
-            <h2 style="font-family:'Bodoni Moda'; font-size:40px; margin-bottom:40px;">
-              LEADERBOARD
-            </h2>
 
-          <div id="leaderboard-container"></div>
-        </section>
+    <h2 style="font-family:'Bodoni Moda'; font-size:40px; margin-bottom:40px;">
+        LEADERBOARD
+    </h2>
+    <input 
+    id="friend-search-input"
+    placeholder="Search Friends"
+    oninput="renderLeaderboard()"
+    style="
+        width:400px;
+        padding:10px;
+        margin-bottom:25px;
+        border:1px solid black;
+        background:white;
+        font-family:inherit;
+        font-size:12px;
+        letter-spacing:1px;
+    ">
+    <!-- 🔥 ADD THIS BLOCK RIGHT HERE -->
+    <div style="margin-bottom:40px; max-width:400px;">
+        <h3 style="font-family:'Bodoni Moda'; margin-bottom:15px;">ADD FRIEND</h3>
+
+        <input id="friend-name-input"
+    placeholder="Name"
+    style="width:100%; padding:10px; margin-bottom:10px; border:1px solid black; background:white; font-family:inherit; font-size:12px; letter-spacing:1px;">
+
+<input id="friend-email-input"
+    placeholder="Email"
+    style="width:100%; padding:10px; margin-bottom:15px; border:1px solid black; background:white; font-family:inherit; font-size:12px; letter-spacing:1px;">
+    
+        <button onclick="addFriend()"
+            style="padding:10px 20px; border:1px solid black; background:black; color:white; cursor:pointer;">
+            ADD FRIEND
+        </button>
+    </div>
+
+    <div id="leaderboard-container"></div>
+
+</section>
 
 
     </main>
@@ -331,42 +390,247 @@
 
     </div>
 
+    <div id="scrapModal" class="modal">
+    <div style="
+        background:white;
+        width:500px;
+        height:500px;
+        border:2px solid black;
+        display:flex;
+        flex-direction:column;
+        padding:20px;">
 
+        <div id="scrapCanvas" style="
+            flex:1;
+            position:relative;
+            border:2px solid black;
+            overflow:hidden;">
+        </div>
+
+        <div style="margin-top:15px; text-align:center;">
+            <button class="btn-black" onclick="addScrapPhoto()">ADD PHOTO</button>
+            <button class="btn-black" onclick="saveScrapbook()">SAVE</button>
+            <button style="background:none;border:none;margin-left:15px;cursor:pointer;"
+                    onclick="closeScrapModal()">CLOSE</button>
+        </div>
+
+        <input type="file" id="scrapUpload" hidden accept="image/*" multiple>
+    </div>
+    </div>
 
     <script>
     // --- 1. STATE & STORAGE ---
+    let scrapbookMemory = JSON.parse(localStorage.getItem("scrapbooks_v1")) || {};
     let state = JSON.parse(localStorage.getItem('habitly_v3')) || {
-        points: 0, streak: 0, totalCompleted: 0,
+        points: 0, streak: 0,
         userName: "YOU",
 userBio: "BUILDING BETTER HABITS",
 userPhoto: "",
         habits: [{id: 1, name: "READING", icon: "ph-book-open", freq: [0,1,2,3,4,5,6], value: 10}],
         history: {}, 
         friends: [
-            {
-                name: "ALEX RIVERA",
-                id: "f1",
-                streak: 14,
-                points: 420,
-                todayCompleted: 2,
-                history: {
-                    "2026-02-20": { completed: [1], photos: [] },
-                    "2026-02-21": { completed: [1], photos: [] }
-                }
-            },
-            {
-                name: "SAM CHEN",
-                id: "f2",
-                streak: 7,
-                points: 310,
-                todayCompleted: 1,
-                history: {
-                    "2026-02-21": { completed: [1], photos: [] }
-                }
-            }
-        ],
+    {
+        id: "f1",
+        name: "ALEX RIVERA",
+        email: "alex@email.com",
+        createdAt: null,     // will set automatically
+        personality: null,   // assigned later
+        habits: [],
+        history: {}
+    },
+    {
+        id: "f2",
+        name: "SAM CHEN",
+        email: "sam@email.com",
+        createdAt: null,
+        personality: null,
+        habits: [],
+        history: {}
+    }
+],
         lastTaskHour: null
     };
+    const FRIEND_PERSONALITIES = [
+    {
+        type: "disciplined",
+        consistency: 0.85,
+        habits: ["READING", "GYM", "MEDITATION"]
+    },
+    {
+        type: "balanced",
+        consistency: 0.65,
+        habits: ["READING", "WALK", "JOURNAL"]
+    },
+    {
+        type: "chaotic",
+        consistency: 0.4,
+        habits: ["READING", "GYM"]
+    }
+];
+
+function randomChoice(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+function initializeFriend(friend) {
+
+    if (!friend.createdAt) {
+        friend.createdAt = new Date();
+    }
+
+    if (!friend.personality) {
+        friend.personality = randomChoice(FRIEND_PERSONALITIES);
+    }
+
+    if (!friend.habits || friend.habits.length === 0) {
+        friend.habits = friend.personality.habits.map((h, i) => ({
+            id: i + 1,
+            name: h,
+            value: 10
+        }));
+    }
+}
+function simulateFriendHistory(friend) {
+
+    const today = new Date();
+    const startDate = new Date();
+    startDate.setMonth(today.getMonth() - 2);
+
+    friend.history = {};
+
+    let current = new Date(startDate);
+
+    while (current <= today) {
+
+        const dateStr = current.toISOString().split("T")[0];
+
+        const completed = [];
+
+        friend.habits.forEach(h => {
+            if (Math.random() < friend.personality.consistency) {
+                completed.push(h.id);
+            }
+        });
+
+        const photos = [];
+
+        // 🔥 Only generate photos if at least 1 habit completed
+        // Only generate photos on ~15% of active days
+if (completed.length > 0 && Math.random() < 0.25) {
+
+    const photoCount = Math.random() < 0.4 ? 1 : 2; // mostly 1, sometimes 2
+
+    for (let i = 0; i < photoCount; i++) {
+        photos.push(
+            `https://picsum.photos/id/${(Math.floor(Math.random()*1000)+1)}/300`
+        );
+    }
+}
+
+        friend.history[dateStr] = {
+            completed,
+            photos
+        };
+
+        current.setDate(current.getDate() + 1);
+    }
+}
+function calculateFriendStats(friend) {
+
+    let points = 0;
+
+    Object.values(friend.history).forEach(day => {
+        day.completed.forEach(id => {
+            const habit = friend.habits.find(h => h.id === id);
+            if (habit) points += habit.value;
+        });
+    });
+
+    return {
+        points
+    };
+}
+function renderFriendBadges(friend) {
+
+    const stats = calculateFriendStats(friend);
+
+    const hasFirstStep =
+        Object.values(friend.history)
+            .some(day => day.completed.length > 0);
+
+    const hasMemory =
+        Object.values(friend.history)
+            .some(day => day.photos.length > 0);
+
+    const hasLegend = stats.points >= 1000;
+
+    return `
+        <div style="display:flex; gap:30px; margin-top:25px;">
+
+            <div style="
+                border:1px solid black;
+                padding:20px;
+                text-align:center;
+                width:140px;
+                opacity:${hasFirstStep ? 1 : 0.3};
+            ">
+                <i class="ph ph-plant" style="font-size:28px;"></i>
+                <div style="font-size:10px; margin-top:10px;">
+                    FIRST STEP
+                </div>
+            </div>
+
+            <div style="
+                border:1px solid black;
+                padding:20px;
+                text-align:center;
+                width:140px;
+                opacity:${hasMemory ? 1 : 0.3};
+            ">
+                <i class="ph ph-camera" style="font-size:28px;"></i>
+                <div style="font-size:10px; margin-top:10px;">
+                    MEMORY KEEPER
+                </div>
+            </div>
+
+            <div style="
+                border:1px solid black;
+                padding:20px;
+                text-align:center;
+                width:140px;
+                opacity:${hasLegend ? 1 : 0.3};
+            ">
+                <i class="ph ph-crown" style="font-size:28px;"></i>
+                <div style="font-size:10px; margin-top:10px;">
+                    1000 PT LEGEND
+                </div>
+            </div>
+
+        </div>
+    `;
+}
+function renderFriendsShowcase() {
+
+    const container = document.getElementById('leaderboard-container');
+
+    let html = "";
+
+    state.friends.forEach(friend => {
+
+        const stats = calculateFriendStats(friend);
+
+        html += `
+            <div style="margin-bottom:50px;">
+                <h2 style="font-family:'Bodoni Moda';">${friend.name}</h2>
+                <div style="font-size:12px;">
+                    POINTS: ${stats.points}
+                </div>
+                ${renderFriendBadges(friend)}
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
 
     let currentViewDate = new Date();
     let selectedDateStr = new Date().toISOString().split('T')[0];
@@ -374,36 +638,149 @@ userPhoto: "",
     let currentFriend = null;
     let modalIcon = "ph-star";
     let modalFreq = [0,1,2,3,4,5,6];
+    let editingHabitId = null;
 
     function save() { localStorage.setItem('habitly_v3', JSON.stringify(state)); }
 
     // --- 2. CALENDAR ENGINE (USER) ---
     function renderCalendar() {
+
         const grid = document.getElementById('calendarGrid');
-        if(!grid) return;
+        if (!grid) return;
+
         grid.innerHTML = "";
+
         const y = currentViewDate.getFullYear();
         const m = currentViewDate.getMonth();
-        document.getElementById('month-label').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate).toUpperCase();
+
+        document.getElementById('month-label').innerText =
+            new Intl.DateTimeFormat('en-US', {
+                month: 'long',
+                year: 'numeric'
+            }).format(currentViewDate).toUpperCase();
 
         const firstDay = new Date(y, m, 1).getDay();
         const daysInMonth = new Date(y, m + 1, 0).getDate();
 
-        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+        // Empty cells before first day
+        for (let i = 0; i < firstDay; i++)
+            grid.appendChild(document.createElement('div'));
 
         for (let d = 1; d <= daysInMonth; d++) {
-            const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+            const dStr =
+                `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
             const dayEl = document.createElement('div');
-            dayEl.className = `cal-day ${dStr === selectedDateStr ? 'selected' : ''}`;
-            dayEl.innerHTML = `<span>${String(d).padStart(2, '0')}</span>`;
-            if (state.history[dStr] && state.history[dStr].completed.length > 0) {
-                dayEl.innerHTML += `<div class="dot"></div>`;
+            dayEl.className =
+                `cal-day ${dStr === selectedDateStr ? 'selected' : ''}`;
+
+            dayEl.innerHTML =
+                `<span style="position:relative; z-index:2;">
+                    ${String(d).padStart(2, '0')}
+                </span>`;
+
+            // ===============================
+            //  DAILY PROGRESS BAR
+            // ===============================
+
+            const dateObj = new Date(dStr + "T00:00:00");
+const dayOfWeek = dateObj.getDay();
+
+const scheduled =
+    state.habits.filter(h => h.freq.includes(dayOfWeek));
+
+const completed =
+    state.history[dStr]?.completed || [];
+
+// Only count completed habits that are actually scheduled that day
+const validCompleted = scheduled.filter(h =>
+    completed.includes(h.id)
+);
+
+if (scheduled.length > 0) {
+
+    const percent = Math.min(100,
+        (validCompleted.length / scheduled.length) * 100
+    );
+
+    const progressContainer =
+        document.createElement("div");
+
+    progressContainer.style.position = "absolute";
+    progressContainer.style.top = "4px";
+    progressContainer.style.bottom = "4px";
+    progressContainer.style.left = "8px";
+    progressContainer.style.right = "8px";
+    progressContainer.style.height = "5px";
+    progressContainer.style.border = "1px solid black";
+
+    const progressFill =
+        document.createElement("div");
+
+    progressFill.style.height = "100%";
+    progressFill.style.width = percent + "%";
+    progressFill.style.background = "black";
+    progressFill.style.transition = "width 0.3s ease";
+
+    progressContainer.appendChild(progressFill);
+    dayEl.appendChild(progressContainer);
+}
+
+            // ===============================
+            //  SCRAPBOOK PREVIEW SQUARE
+            // ===============================
+
+            const saved = scrapbookMemory[dStr];
+
+            if (saved) {
+
+                const preview = document.createElement("div");
+
+                preview.style.position = "absolute";
+                preview.style.width = "70px";
+                preview.style.height = "70px";
+                preview.style.left = "50%";
+                preview.style.top = "50%";
+                preview.style.transform = "translate(-50%, -50%)";
+                preview.style.border = "1px solid black";
+                preview.style.overflow = "hidden";
+                preview.style.background = "white";
+
+                const clone = document.createElement("div");
+                clone.innerHTML = saved;
+
+                clone.style.width = "500px";
+                clone.style.height = "500px";
+                const scaleFactor = 70 / 500;
+                clone.style.transform = `scale(${scaleFactor})`;
+                clone.style.transformOrigin = "top left";
+                clone.style.position = "absolute";
+
+                preview.appendChild(clone);
+                dayEl.appendChild(preview);
             }
-            dayEl.onclick = () => { selectedDateStr = dStr; renderCalendar(); updateDayDetail(); };
+
+            // ===============================
+            //  CLICK OPENS SCRAPBOOK
+            // ===============================
+
+            // Single click → select date
+            dayEl.onclick = () => {
+                selectedDateStr = dStr;
+                renderCalendar();
+                updateDayDetail();
+            };
+
+            // Double click → open scrapbook
+            dayEl.ondblclick = () => {
+                selectedDateStr = dStr;
+                openScrapModal();
+            };
+
             grid.appendChild(dayEl);
         }
     }
-
     function moveMonth(dir) { 
         currentViewDate.setMonth(currentViewDate.getMonth() + dir); 
         renderCalendar(); 
@@ -426,27 +803,29 @@ userPhoto: "",
                 <span style="font-weight:700; font-size:12px;">${h.name}</span>
             </div>
         `).join('');
-        renderScrapbook(dayData.photos);
     }
 
     function toggleHabit(id, date) {
-        if (!state.history[date]) state.history[date] = { completed: [], photos: [] };
-        const idx = state.history[date].completed.indexOf(id);
-        const habit = state.habits.find(h => h.id === id);
-        const pointValue = habit ? (habit.value || 10) : 10;
+    if (!state.history[date]) state.history[date] = { completed: [], photos: [] };
 
-        if (idx > -1) {
-            state.history[date].completed.splice(idx, 1);
-            state.points = Math.max(0, state.points - pointValue);
-            state.totalCompleted--;
-        } else {
-            state.history[date].completed.push(id);
-            state.points += pointValue;
-            state.totalCompleted++;
-            state.lastTaskHour = new Date().getHours();
-        }
-        updateStats(); renderCalendar(); updateDayDetail();
+    const idx = state.history[date].completed.indexOf(id);
+    const habit = state.habits.find(h => h.id === id);
+    const pointValue = habit ? (habit.value || 10) : 10;
+
+    if (idx > -1) {
+        state.history[date].completed.splice(idx, 1);
+        state.points = Math.max(0, state.points - pointValue);
+    } else {
+        state.history[date].completed.push(id);
+        state.points += pointValue;
+        state.lastTaskHour = new Date().getHours();
     }
+
+    updateStats();
+    save();
+    renderCalendar();
+    updateDayDetail();
+}
 
     // --- 4. FRIEND & LEADERBOARD LOGIC ---
     function openFriendView(friendId) {
@@ -462,81 +841,218 @@ userPhoto: "",
         renderFriendCalendar();
         renderFriendDayDetail();
     }
+    function removeProfilePhoto() {
+    state.userPhoto = "";
+    save();
+    updateProfileDisplay();
+}
 
-    function renderFriendCalendar() {
-        const grid = document.getElementById('friendCalendarGrid');
-        grid.innerHTML = "";
-        const y = currentViewDate.getFullYear();
-        const m = currentViewDate.getMonth();
+function renderFriendCalendar() {
 
-        const firstDay = new Date(y, m, 1).getDay();
-        const daysInMonth = new Date(y, m + 1, 0).getDate();
+    document.getElementById("friend-month-label").innerText =
+        new Intl.DateTimeFormat('en-US', {
+            month: 'long',
+            year: 'numeric'
+        }).format(currentViewDate).toUpperCase();
 
-        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+    const grid = document.getElementById('friendCalendarGrid');
+    grid.innerHTML = "";
 
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const dayEl = document.createElement('div');
-            dayEl.className = `cal-day ${dStr === friendSelectedDate ? 'selected' : ''}`;
-            dayEl.innerHTML = `<span>${String(d).padStart(2, '0')}</span>`;
+    const y = currentViewDate.getFullYear();
+    const m = currentViewDate.getMonth();
 
-            if (currentFriend.history && currentFriend.history[dStr] && currentFriend.history[dStr].completed.length > 0) {
-                dayEl.innerHTML += `<div class="dot"></div>`;
-            }
+    const firstDay = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
 
-            dayEl.onclick = () => {
-                friendSelectedDate = dStr;
-                renderFriendCalendar();
-                renderFriendDayDetail();
-            };
-            grid.appendChild(dayEl);
+    for (let i = 0; i < firstDay; i++)
+        grid.appendChild(document.createElement('div'));
+
+    for (let d = 1; d <= daysInMonth; d++) {
+
+        const dStr =
+            `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+        const dayEl = document.createElement('div');
+        dayEl.className = `cal-day ${dStr === friendSelectedDate ? 'selected' : ''}`;
+        dayEl.innerHTML = `<span>${String(d).padStart(2,'0')}</span>`;
+
+        const dayData = currentFriend.history[dStr];
+
+        // 🔥 Progress Bar
+        if (dayData) {
+
+            const percent =
+                (dayData.completed.length / currentFriend.habits.length) * 100;
+
+            const progressContainer = document.createElement("div");
+            progressContainer.style.position = "absolute";
+            progressContainer.style.top = "4px";
+            progressContainer.style.left = "8px";
+            progressContainer.style.right = "8px";
+            progressContainer.style.height = "5px";
+            progressContainer.style.border = "1px solid black";
+
+            const progressFill = document.createElement("div");
+            progressFill.style.height = "100%";
+            progressFill.style.width = percent + "%";
+            progressFill.style.background = "black";
+
+            progressContainer.appendChild(progressFill);
+            dayEl.appendChild(progressContainer);
         }
+
+        // 🔥 Photo Preview
+        if (dayData && dayData.photos && dayData.photos.length > 0) {
+
+    const preview = document.createElement("div");
+
+    preview.style.position = "absolute";
+    preview.style.width = "55px";          // smaller
+    preview.style.height = "55px";
+    preview.style.left = "50%";
+    preview.style.top = "55%";
+    preview.style.transform = "translate(-50%, -50%)";
+    preview.style.border = "1.5px solid black";  // cleaner border
+    preview.style.background = "white";
+    preview.style.overflow = "hidden";
+
+    const img = document.createElement("img");
+    img.src = dayData.photos[0];
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover";
+
+    preview.appendChild(img);
+    dayEl.appendChild(preview);
+}
+
+        dayEl.onclick = () => {
+            friendSelectedDate = dStr;
+            renderFriendCalendar();
+            renderFriendDayDetail();
+        };
+
+        grid.appendChild(dayEl);
     }
+}
 
     function renderFriendDayDetail() {
-        const container = document.getElementById('friend-day-detail');
-        const dateObj = new Date(friendSelectedDate + "T00:00:00");
-        const dayData = currentFriend.history[friendSelectedDate] || { completed: [], photos: [] };
 
-        let html = `<h2 style="font-family:'Bodoni Moda'; margin-bottom: 20px;">${dateObj.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'}).toUpperCase()}</h2>`;
-        
-        if (dayData.completed.length === 0) {
-            html += `<p style="font-size:11px; color:gray;">NO HABITS COMPLETED THIS DAY.</p>`;
-        } else {
-            html += dayData.completed.map(id => {
-                // Since this is a friend, we show a generic check or map to your icons
-                return `<div class="checklist-item">
-                            <i class="ph ph-check-circle" style="color:black; font-size:20px;"></i>
-                            <span style="font-weight:700; font-size:12px;">HABIT COMPLETED</span>
-                        </div>`;
-            }).join('');
-        }
-        container.innerHTML = html;
+    const container = document.getElementById('friend-day-detail');
+    const dateObj = new Date(friendSelectedDate + "T00:00:00");
+
+    const dayData =
+        currentFriend.history[friendSelectedDate] || { completed: [], photos: [] };
+
+    let html = `
+        <h2 style="font-family:'Bodoni Moda'; margin-bottom: 20px;">
+            ${dateObj.toLocaleDateString('en-US', {
+                weekday:'long',
+                month:'long',
+                day:'numeric'
+            }).toUpperCase()}
+        </h2>
+    `;
+
+    // 🔥 Loop through ALL habits
+    currentFriend.habits.forEach(habit => {
+
+        const isCompleted = dayData.completed.includes(habit.id);
+
+        html += `
+            <div class="checklist-item">
+                <i class="ph ${
+                    isCompleted ? "ph-check-circle" : "ph-circle"
+                }" style="font-size:20px; ${isCompleted ? "" : "opacity:0.3;"}"></i>
+                <span style="font-weight:700; font-size:12px; ${isCompleted ? "" : "opacity:0.5;"}">
+                    ${habit.name}
+                </span>
+            </div>
+        `;
+    });
+
+    // 🔥 Render Photos
+    if (dayData.photos && dayData.photos.length > 0) {
+
+        html += `
+    <div style="
+        display:flex;
+        gap:25px;
+        margin-top:30px;
+        flex-wrap:wrap;
+    ">
+`;
+
+dayData.photos.forEach(src => {
+    html += `
+        <img src="${src}" style="
+            width:220px;
+            height:220px;
+            object-fit:cover;
+            border:1.5px solid black;
+        ">
+    `;
+});
+
+html += `</div>`;
     }
+
+    container.innerHTML = html;
+}
 
     function renderLeaderboard() {
-        const container = document.getElementById('leaderboard-container');
-        const today = new Date().toISOString().split('T')[0];
-        const myToday = state.history[today]?.completed.length || 0;
 
-        const all = [
-            { name: state.userName, points: state.points, today: myToday, isUser: true },
-            ...state.friends.map(f => ({ name: f.name, points: f.points, today: f.todayCompleted || 0, isUser: false }))
-        ].sort((a, b) => b.points - a.points);
+    const container = document.getElementById('leaderboard-container');
+    const searchValue = document
+        .getElementById('friend-search-input')
+        .value
+        .toLowerCase();
 
-        container.innerHTML = all.map((p, i) => `
-            <div class="checklist-item" style="justify-content:space-between;">
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <span style="font-family:'Bodoni Moda'; font-size:20px;">#${i+1}</span>
-                    <div>
-                        <div style="font-weight:700; font-size:12px;">${p.name} ${p.isUser ? '(YOU)' : ''}</div>
-                        <div style="font-size:9px; color:gray;">TODAY: ${p.today}</div>
-                    </div>
+    // 🔥 Sort by points
+    const sortedFriends = [...state.friends]
+        .map(f => ({
+            ...f,
+            stats: calculateFriendStats(f)
+        }))
+        .sort((a, b) => b.stats.points - a.stats.points);
+
+    let html = "";
+
+    sortedFriends.forEach((friend, index) => {
+
+        if (!friend.name.toLowerCase().includes(searchValue)) return;
+
+        html += `
+            <div style="margin-bottom:60px;">
+                <div style="display:flex; justify-content:space-between;">
+                    <h2 style="font-family:'Bodoni Moda';">
+                        #${index + 1} ${friend.name}
+                    </h2>
+
+                    <button 
+                        onclick="deleteFriend('${friend.id}')"
+                        style="
+                            background:none;
+                            border:1px solid black;
+                            padding:6px 12px;
+                            cursor:pointer;
+                            font-size:10px;
+                        ">
+                        DELETE
+                    </button>
                 </div>
-                <div style="font-family:'Bodoni Moda'; font-size:18px;">${p.points} PT</div>
+
+                <div style="font-size:12px; margin-top:5px;">
+                    POINTS: ${friend.stats.points}
+                </div>
+
+                ${renderFriendBadges(friend)}
             </div>
-        `).join('');
-    }
+        `;
+    });
+
+    container.innerHTML = html;
+}
 
     function goBackToProfile() {
         switchPage('profile', document.querySelector('.nav-links li:nth-child(4)'));
@@ -556,48 +1072,217 @@ userPhoto: "",
     }
 
     function updateStats() {
-        state.streak = calculateStreak();
-        document.getElementById('streak-val').innerText = state.streak;
-        document.getElementById('points-val').innerText = state.points;
+    state.streak = calculateStreak();
+
+    document.getElementById('streak-val').innerText = state.streak;
+    document.getElementById('points-val').innerText = state.points;
+
+    renderRewards();  // critical
+
+    save();
+}
+
+    function calculateStreak() {
+
+    let streak = 0;
+    let checkDate = new Date();
+
+    console.log("---- STREAK DEBUG START ----");
+
+    while (true) {
+
+        const dStr = checkDate.toISOString().split('T')[0];
+        const dayOfWeek = checkDate.getDay();
+
+        const scheduled = state.habits.filter(h =>
+            h.freq.includes(dayOfWeek)
+        );
+
+        const done = state.history[dStr]?.completed || [];
+
+        console.log("Date:", dStr);
+        console.log("Scheduled IDs:", scheduled.map(h => h.id));
+        console.log("Completed IDs:", done);
+
+        if (scheduled.length === 0) {
+            console.log("No habits scheduled → skipping day");
+            checkDate.setDate(checkDate.getDate() - 1);
+            continue;
+        }
+
+        if (scheduled.every(h => done.includes(h.id))) {
+            console.log("Day counts ✔");
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            console.log("Day breaks streak ✘");
+            break;
+        }
+    }
+
+    console.log("Final Streak:", streak);
+    console.log("---- STREAK DEBUG END ----");
+
+    return streak;
+}
+function getTotalCompleted() {
+    return Object.values(state.history)
+        .reduce((sum, day) => sum + (day.completed?.length || 0), 0);
+}
+function enableBioEdit() {
+
+    const bioEl = document.getElementById('user-bio-display');
+    const currentBio = bioEl.innerText;
+
+    bioEl.innerHTML = `
+        <input type="text"
+               value="${currentBio}"
+               onblur="saveBio(this.value)"
+               style="
+                    font-family: 'Inter', sans-serif;
+                    font-size: 12px;
+                    letter-spacing: 0.05em;
+                    color: #888;
+                    border: 1px solid black;
+                    padding: 4px;
+                    outline: none;
+                    width: 260px;
+               ">
+    `;
+
+    bioEl.querySelector("input").focus();
+}
+function saveBio(newBio) {
+
+    if (newBio.trim() !== "") {
+        state.userBio = newBio.toUpperCase();
         save();
     }
 
-    function calculateStreak() {
-        let streak = 0; let checkDate = new Date();
-        while (true) {
-            const dStr = checkDate.toISOString().split('T')[0];
-            const dayOfWeek = checkDate.getDay();
-            const scheduled = state.habits.filter(h => h.freq.includes(dayOfWeek));
-            if (scheduled.length === 0) {
-                checkDate.setDate(checkDate.getDate() - 1);
-                continue;
+    updateProfileDisplay();
+}
+function deleteFriend(id) {
+
+    state.friends = state.friends.filter(f => f.id !== id);
+
+    save();
+    renderLeaderboard();
+    updateProfileDisplay();
+}
+function hasSevenDayStreak() {
+
+    const dates = Object.keys(state.history).sort();
+
+    let count = 0;
+
+    for (let i = 0; i < dates.length; i++) {
+
+        const dStr = dates[i];
+        const dateObj = new Date(dStr);
+        const dayOfWeek = dateObj.getDay();
+
+        const scheduled = state.habits.filter(h =>
+            h.freq.includes(dayOfWeek)
+        );
+
+        if (scheduled.length === 0) continue;
+
+        const done = state.history[dStr]?.completed || [];
+
+        const fullCompletion =
+            scheduled.every(h => done.includes(h.id));
+
+        if (fullCompletion) {
+
+            if (i > 0) {
+                const prev = new Date(dates[i - 1]);
+                const curr = new Date(dStr);
+                const diff = (curr - prev) / (1000 * 60 * 60 * 24);
+
+                if (diff === 1) {
+                    count++;
+                } else {
+                    count = 1;
+                }
+            } else {
+                count = 1;
             }
-            const done = state.history[dStr]?.completed || [];
-            if (scheduled.every(h => done.includes(h.id)) && done.length > 0) {
-                streak++; checkDate.setDate(checkDate.getDate() - 1);
-            } else break;
+
+            if (count >= 7) return true;
+
+        } else {
+            count = 0;
         }
-        return streak;
     }
+
+    return false;
+}
 
    function updateProfileDisplay() {
     document.getElementById('user-name-display').innerText = state.userName;
     document.getElementById('user-bio-display').innerText = state.userBio;
 
     const photo = document.getElementById('profile-photo');
-    if (state.userPhoto) {
-        photo.src = state.userPhoto;
-    } else {
-        photo.src = "https://via.placeholder.com/100?text=Y";
-    }
 
-    const container = document.getElementById('friends-container');
-    container.innerHTML = state.friends.map(f => `
-        <div class="checklist-item" style="justify-content:space-between; cursor:pointer;" onclick="openFriendView('${f.id}')">
-            <span style="font-weight:700; font-size:12px;">${f.name}</span>
-            <span style="font-size:10px; color:#888;">${f.streak} DAY STREAK</span>
+if (state.userPhoto) {
+    photo.src = state.userPhoto;
+    photo.style.display = "block";
+} else {
+    photo.removeAttribute("src");
+    photo.style.display = "none";   // 🔥 hides broken image completely
+}
+
+    const container = document.getElementById('profile-friend-list');
+
+container.innerHTML = state.friends
+    .map(f => `
+        <div style="
+            font-weight:700;
+    font-size:14px;
+    margin-bottom:20px;
+    cursor:pointer;
+    letter-spacing:1px;
+
+            cursor:pointer;
+        " onclick="openFriendView('${f.id}')">
+            ${f.name}
         </div>
     `).join('');
+}
+function addFriend() {
+
+    const nameInput = document.getElementById("friend-name-input");
+    const emailInput = document.getElementById("friend-email-input");
+
+    const name = nameInput.value.trim().toUpperCase();
+    const email = emailInput.value.trim();
+
+    if (!name || !email) return;
+
+    const newFriend = {
+        id: "f" + Date.now(),
+        name,
+        email,
+        createdAt: null,
+        personality: null,
+        habits: [],
+        history: {}
+    };
+
+    // 🔥 Initialize personality + habits
+    initializeFriend(newFriend);
+
+    // 🔥 Simulate 2-month history
+    simulateFriendHistory(newFriend);
+
+    state.friends.push(newFriend);
+
+    save();
+    renderLeaderboard();
+    updateProfileDisplay();
+
+    nameInput.value = "";
+    emailInput.value = "";
 }
 function enableNameEdit() {
     const nameEl = document.getElementById('user-name-display');
@@ -635,7 +1320,11 @@ function changeProfilePhoto(event) {
 }
     // Boilerplate for remaining functions
     function openModal() { document.getElementById('habitModal').style.display = 'flex'; renderModalIcons(); }
-    function closeModal() { document.getElementById('habitModal').style.display = 'none'; }
+    function closeModal() { 
+    editingHabitId = null;
+    document.querySelector("#habitModal h3").innerText = "CREATE";
+    document.getElementById('habitModal').style.display = 'none'; 
+}
     function renderModalIcons() {
         const icons = ['ph-book-open', 'ph-drop', 'ph-barbell', 'ph-heart', 'ph-leaf', 'ph-pencil', 'ph-sun', 'ph-moon', 'ph-coffee', 'ph-code'];
         document.getElementById('iconLib').innerHTML = icons.map(i => `<div class="icon-btn ${modalIcon === i ? 'active' : ''}" onclick="modalIcon='${i}'; renderModalIcons()"><i class="ph ${i}"></i></div>`).join('');
@@ -648,32 +1337,99 @@ function changeProfilePhoto(event) {
         renderModalIcons();
     }
     function saveHabit() {
-        const name = document.getElementById('habitNameInput').value;
-        const pts = parseInt(document.getElementById('habitPointsInput').value) || 10;
-        if(name) {
-            state.habits.push({ id: Date.now(), name: name.toUpperCase(), icon: modalIcon, freq: [...modalFreq], value: pts });
-            save(); closeModal(); renderHabitsSetup(); updateDayDetail();
+
+    const name = document.getElementById('habitNameInput').value.trim();
+    const pts = parseInt(document.getElementById('habitPointsInput').value) || 10;
+
+    if (!name) return;
+
+    if (editingHabitId) {
+
+        const habit = state.habits.find(h => h.id === editingHabitId);
+
+        if (habit) {
+            habit.name = name.toUpperCase();
+            habit.icon = modalIcon;
+            habit.freq = [...modalFreq];
+            habit.value = pts;
         }
+
+        editingHabitId = null;
+
+    } else {
+
+        state.habits.push({
+            id: Date.now(),
+            name: name.toUpperCase(),
+            icon: modalIcon,
+            freq: [...modalFreq],
+            value: pts
+        });
     }
+
+    document.getElementById('habitNameInput').value = "";
+    document.getElementById('habitPointsInput').value = "";
+
+    modalIcon = "ph-star";
+    modalFreq = [0,1,2,3,4,5,6];
+
+    document.querySelector("#habitModal h3").innerText = "CREATE";
+
+    save();
+    closeModal();
+    renderHabitsSetup();
+    renderCalendar();
+    updateDayDetail();
+    updateStats();
+}
     function renderHabitsSetup() {
         const container = document.getElementById('habit-list-container');
         container.innerHTML = state.habits.map(h => `
             <div class="checklist-item" style="justify-content:space-between">
                 <div style="display:flex; align-items:center; gap:15px"><i class="ph ${h.icon}"></i><span style="font-weight:700; font-size:12px;">${h.name}</span></div>
-                <button onclick="deleteHabit(${h.id})" style="background:none; border:none; color:red; cursor:pointer; font-size:10px;">DELETE</button>
+                <button onclick="editHabit(${h.id})" 
+    style="background:none; border:none; cursor:pointer; font-size:10px;">
+    EDIT
+</button>
+
+<button onclick="deleteHabit(${h.id})" 
+    style="background:none; border:none; color:red; cursor:pointer; font-size:10px;">
+    DELETE
+</button>
             </div>
         `).join('');
     }
-    function deleteHabit(id) { state.habits = state.habits.filter(h => h.id !== id); save(); renderHabitsSetup(); updateDayDetail(); }
-    function renderScrapbook(photos) {
-        const grid = document.getElementById('photoGrid');
-        if(!grid) return;
-        const label = grid.querySelector('label');
-        grid.innerHTML = ""; if(label) grid.appendChild(label);
-        (photos || []).forEach(p => {
-            const img = document.createElement('img'); img.src = p; img.className = 'photo-slot'; grid.prepend(img);
-        });
+    function deleteHabit(id) {
+
+    state.habits = state.habits.filter(h => h.id !== id);
+
+    Object.keys(state.history).forEach(date => {
+        state.history[date].completed =
+            state.history[date].completed.filter(hid => hid !== id);
+    });
+
+    save();
+    renderHabitsSetup();
+    updateDayDetail();
+    renderCalendar();
     }
+    function editHabit(id) {
+
+    const habit = state.habits.find(h => h.id === id);
+    if (!habit) return;
+
+    editingHabitId = id;
+
+    document.getElementById('habitNameInput').value = habit.name;
+    document.getElementById('habitPointsInput').value = habit.value || 10;
+
+    modalIcon = habit.icon;
+    modalFreq = [...habit.freq];
+
+    document.querySelector("#habitModal h3").innerText = "EDIT";
+
+    openModal();
+}
     function uploadPhoto(event) {
         const files = event.target.files;
         if (!state.history[selectedDateStr]) state.history[selectedDateStr] = { completed: [], photos: [] };
@@ -685,28 +1441,311 @@ function changeProfilePhoto(event) {
         }
     }
     function renderRewards() {
-        const badgeLogic = [
-            {name: 'FIRST STEP', icon: 'ph-plant', check: () => state.totalCompleted >= 1},
-            {name: '7-DAY WARRIOR', icon: 'ph-sword', check: () => state.streak >= 7},
-            {name: 'MEMORY KEEPER', icon: 'ph-camera', check: () => Object.values(state.history).some(d => d.photos.length >= 1)},
-            {name: '1000 PT LEGEND', icon: 'ph-crown', check: () => state.points >= 1000}
-        ];
-        const container = document.getElementById('badge-container');
-        container.innerHTML = badgeLogic.map(b => `<div class="badge ${b.check() ? 'unlocked' : ''}"><i class="ph ${b.icon}"></i><p>${b.name}</p></div>`).join('');
-        document.getElementById('total-stats-text').innerText = `POINTS: ${state.points} | COMPLETED: ${state.totalCompleted}`;
-    }
+
+    const badgeLogic = [
+        {
+            name: 'FIRST STEP',
+            icon: 'ph-plant',
+            check: () =>
+                Object.values(state.history)
+                    .some(day => day.completed?.length > 0)
+        },
+        {
+            name: '7-DAY WARRIOR',
+            icon: 'ph-sword',
+            check: () => hasSevenDayStreak()
+        },
+        {
+            name: 'MEMORY KEEPER',
+            icon: 'ph-camera',
+            check: () =>
+                Object.values(scrapbookMemory).length > 0
+        },
+        {
+            name: '1000 PT LEGEND',
+            icon: 'ph-crown',
+            check: () => state.points >= 1000
+        }
+    ];
+
+    const container = document.getElementById('badge-container');
+
+    container.innerHTML = badgeLogic.map(b => {
+        const unlocked = b.check();
+        return `
+            <div class="badge ${unlocked ? 'unlocked' : ''}">
+                <i class="ph ${b.icon}"></i>
+                <p>${b.name}</p>
+            </div>
+        `;
+    }).join('');
+
+    const totalCompleted = Object.values(state.history)
+        .reduce((sum, day) => sum + (day.completed?.length || 0), 0);
+
+    document.getElementById('total-stats-text').innerText =
+`POINTS: ${state.points} | COMPLETED: ${getTotalCompleted()}`;
+}
     function editProfile() {
         state.userName = prompt("NAME:", state.userName).toUpperCase();
         state.userBio = prompt("BIO:", state.userBio).toUpperCase();
         save(); updateProfileDisplay();
     }
 
-    window.onload = () => { 
-        renderCalendar(); 
-        updateStats(); 
-        updateDayDetail(); 
-        updateProfileDisplay(); 
+    window.onload = () => {
+
+    state.friends.forEach(f => {
+        initializeFriend(f);
+        simulateFriendHistory(f);
+    });
+
+    renderCalendar();
+    updateStats();
+    updateDayDetail();
+    updateProfileDisplay();
+};
+    function openScrapModal() {
+        document.getElementById("scrapModal").style.display = "flex";
+        loadScrapbook();
+    }
+
+    function closeScrapModal() {
+        document.getElementById("scrapModal").style.display = "none";
+    }
+
+    function addScrapPhoto() {
+        document.getElementById("scrapUpload").click();
+    }
+
+    document.getElementById("scrapUpload").onchange = function(e) {
+
+        const canvas = document.getElementById("scrapCanvas");
+
+        const currentItems = canvas.querySelectorAll(".scrap-item").length;
+
+        const filesToAdd = e.target.files.length;
+
+        if (currentItems + filesToAdd > 5) {
+            alert("MAXIMUM 5 IMAGES PER DAY");
+            return;
+        }
+
+        for (let file of e.target.files) {
+
+            const reader = new FileReader();
+
+            reader.onload = ev => {
+                createScrapItem(ev.target.result);
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        e.target.value = "";
     };
+
+    function createScrapItem(src) {
+
+        const canvas = document.getElementById("scrapCanvas");
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "scrap-item";
+        wrapper.style.position = "absolute";
+        wrapper.style.left = "150px";
+        wrapper.style.top = "150px";
+        wrapper.style.transform = "rotate(0deg)";
+        wrapper.dataset.rotation = 0;
+
+        const img = document.createElement("img");
+        img.src = src;
+        img.style.width = "150px";
+        img.style.border = "8px solid white";
+        img.style.boxShadow = "0 5px 15px rgba(0,0,0,0.3)";
+        img.style.pointerEvents = "none";
+
+        const rotateHandle = document.createElement("div");
+        rotateHandle.style.width = "14px";
+        rotateHandle.style.height = "14px";
+        rotateHandle.style.border = "2px solid black";
+        rotateHandle.style.background = "white";
+        rotateHandle.style.position = "absolute";
+        rotateHandle.style.top = "-10px";
+        rotateHandle.style.right = "-10px";
+        rotateHandle.style.cursor = "grab";
+
+        const removeBtn = document.createElement("div");
+        removeBtn.innerText = "×";
+        removeBtn.style.position = "absolute";
+        removeBtn.style.top = "-10px";
+        removeBtn.style.left = "-10px";
+        removeBtn.style.width = "18px";
+        removeBtn.style.height = "18px";
+        removeBtn.style.background = "black";
+        removeBtn.style.color = "white";
+        removeBtn.style.fontSize = "14px";
+        removeBtn.style.display = "flex";
+        removeBtn.style.alignItems = "center";
+        removeBtn.style.justifyContent = "center";
+        removeBtn.style.cursor = "pointer";
+        removeBtn.style.borderRadius = "50%";
+
+        // Remove logic
+        removeBtn.onclick = function(e) {
+            e.stopPropagation();
+            wrapper.remove();
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(rotateHandle);
+        wrapper.appendChild(removeBtn);
+
+        canvas.appendChild(wrapper);
+
+        enableDrag(wrapper);
+        enableRotate(wrapper, rotateHandle);
+        
+    }
+
+    function enableDrag(wrapper) {
+
+        const resizeZone = 35; // easier resize detection
+
+        wrapper.onmousemove = function(e) {
+
+            const img = wrapper.querySelector("img");
+            const rect = img.getBoundingClientRect();
+
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+
+            const isResize =
+                offsetX > rect.width - resizeZone &&
+                offsetY > rect.height - resizeZone;
+
+            wrapper.style.cursor = isResize ? "nwse-resize" : "default";
+        };
+
+        wrapper.onmousedown = function(e) {
+
+            const img = wrapper.querySelector("img");
+            const rect = img.getBoundingClientRect();
+
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+
+            const isResize =
+                offsetX > rect.width - resizeZone &&
+                offsetY > rect.height - resizeZone;
+
+            // RESIZE MODE
+            if (isResize) {
+
+                const startX = e.clientX;
+                const startWidth = parseFloat(window.getComputedStyle(img).width);
+
+                document.onmousemove = function(ev) {
+
+                    const delta = ev.clientX - startX;
+                    const newWidth = startWidth + delta;
+
+                    if (newWidth > 60 && newWidth < 800) {
+                        img.style.width = newWidth + "px";
+                    }
+                };
+            }
+
+            // DRAG MODE
+            else {
+
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const dragOffsetX = e.clientX - wrapperRect.left;
+                const dragOffsetY = e.clientY - wrapperRect.top;
+
+                document.onmousemove = function(ev) {
+
+                    wrapper.style.left =
+                        (ev.pageX - wrapper.parentElement.offsetLeft - dragOffsetX) + "px";
+
+                    wrapper.style.top =
+                        (ev.pageY - wrapper.parentElement.offsetTop - dragOffsetY) + "px";
+                };
+            }
+
+            document.onmouseup = function() {
+                document.onmousemove = null;
+            };
+        };
+    }
+    function enableRotate(wrapper, handle) {
+
+        handle.onmousedown = function(e) {
+            e.stopPropagation();
+
+            document.onmousemove = function(ev) {
+
+                const rect = wrapper.getBoundingClientRect();
+                const cx = rect.left + rect.width/2;
+                const cy = rect.top + rect.height/2;
+
+                const angle = Math.atan2(ev.clientY - cy, ev.clientX - cx);
+                const deg = angle * 180 / Math.PI;
+
+                wrapper.style.transform = `rotate(${deg}deg)`;
+                wrapper.dataset.rotation = deg;
+            };
+
+            document.onmouseup = function() {
+                document.onmousemove = null;
+            };
+        };
+    }
+
+    function saveScrapbook() {
+
+    const canvas = document.getElementById("scrapCanvas");
+
+    if (canvas.querySelectorAll(".scrap-item").length === 0) {
+        delete scrapbookMemory[selectedDateStr];
+    } else {
+        scrapbookMemory[selectedDateStr] = canvas.innerHTML;
+    }
+
+    localStorage.setItem(
+        "scrapbooks_v1",
+        JSON.stringify(scrapbookMemory)
+    );
+
+    renderCalendar();
+    renderRewards();   // critical
+    closeScrapModal();
+}
+
+    function loadScrapbook() {
+
+        const canvas = document.getElementById("scrapCanvas");
+        canvas.innerHTML = "";
+
+        const saved = scrapbookMemory[selectedDateStr];
+
+        if (saved) {
+
+            canvas.innerHTML = saved;
+
+            document.querySelectorAll(".scrap-item").forEach(wrapper => {
+
+                const rotateHandle = wrapper.children[1];
+                const removeBtn = wrapper.children[2];
+
+                enableDrag(wrapper);
+                enableRotate(wrapper, rotateHandle);
+
+                removeBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    wrapper.remove();
+                };
+            });
+        }
+    }
 </script>
 
 </body>
